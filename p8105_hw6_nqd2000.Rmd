@@ -75,11 +75,48 @@ mystats = function(lm){
 ```
 
 ```{r}
-# use R built in function modelr
-weather_df %>% 
-  modelr::bootstrap(n = 3) %>% 
-  mutate(models = map(strap, ~lm(tmax ~ tmin, data = .x)),
-         results = map(models, mystats)) %>% 
+set.seed(7)
+# use R built in function modelr to obtain results and plot estimates
+weather_stats = 
+  weather_df %>% 
+  modelr::bootstrap(n = 100) %>% 
+  mutate(models = 
+           map(strap, ~lm(tmax ~ tmin, data = .x)),
+         results = 
+           map(models, mystats)) %>% 
   select(-strap,-models) %>% 
   unnest(results)
+
+#start to plot R-squared 
+weather_stats %>% 
+  ggplot(aes(x = r.squared, 
+             fill = "#0000ff", 
+             color = "#0000ff")) +                  #plot R-squared's
+  geom_density(alpha = 0.3) +
+  labs(title = "Density plot of estimated R-squared across 5000 straps",
+       y = "Density (%)",
+       x = "R-squared") +                           #add graph and axis title
+  theme_bw() + 
+  theme(plot.title = 
+          element_text(hjust = 0.5, 
+                       size=12, 
+                       face='bold'), 
+        legend.position = "none")                #customize annotations
+         
+  
+#plot density of log(betas' product)
+weather_stats %>% 
+  ggplot(aes(x = log_beta_prod, 
+             fill = "green", 
+             color = "green")) +                  #plot density of log_beta_prod
+  geom_density(alpha = 0.3) +
+  labs(title = "Density plot of log(β̂0xβ̂1) across 5000 straps",
+       y = "Density (%)",
+       x = "log(β̂0xβ̂1") +                           #add graph and axis title
+  theme_bw() + 
+  theme(plot.title = 
+          element_text(hjust = 0.5, 
+                       size=12, 
+                       face='bold'), 
+        legend.position = "none")  
 ```
