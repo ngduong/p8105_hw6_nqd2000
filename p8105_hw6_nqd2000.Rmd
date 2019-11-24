@@ -1,0 +1,13 @@
+---
+title: "P8105 -- Homework 6"
+author: "Ngoc Duong - nqd2000"
+date: "11/23/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(readr)
+library(tidyverse)
+library(modelr)
+library(mgcv)
+```
