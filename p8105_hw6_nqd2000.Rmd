@@ -147,6 +147,16 @@ cv_df =
   mutate(rmse_bic = map2_dbl(fit_bic, test, ~rmse(model = .x, data = .y)),
          rmse_main = map2_dbl(fit_main, test, ~rmse(model = .x, data = .y)),
          rmse_int = map2_dbl(fit_int, test, ~rmse(model = .x, data = .y)))
+
+cv_df %>% 
+  select(starts_with("rmse")) %>% 
+  pivot_longer(
+    everything(),
+    names_to = "model", 
+    values_to = "rmse",
+    names_prefix = "rmse_") %>% 
+  mutate(model = fct_inorder(model)) %>% 
+  ggplot(aes(x = model, y = rmse)) + geom_violin()
 ```
 
 ### Problem 2
@@ -202,12 +212,12 @@ weather_stats =
   unnest(results)
 
 #start to plot R-squared 
-weather_stats %>% 
+r_sqr = weather_stats %>% 
   ggplot(aes(x = r.squared, 
-             fill = "#0000ff", 
-             color = "#0000ff")) +                  #plot R-squared's
+             fill = "lightgreen", 
+             color = "lightgreen")) +                  #plot R-squared's
   geom_density(alpha = 0.3) +
-  labs(title = "Density plot of estimated R-squared across 5000 straps",
+  labs(title = "Density plot of estimated R-squared \nacross 5000 straps",
        y = "Density (%)",
        x = "R-squared") +                           #add graph and axis title
   theme_bw() + 
@@ -219,12 +229,12 @@ weather_stats %>%
          
   
 #plot density of log(betas' product)
-weather_stats %>% 
+log_est = weather_stats %>% 
   ggplot(aes(x = log_beta_prod, 
-             fill = "green", 
-             color = "green")) +                  #plot density of log_beta_prod
+             fill = "lightpurple", 
+             color = "lightpurple")) +                  #plot density of log_beta_prod
   geom_density(alpha = 0.3) +
-  labs(title = "Density plot of log(β̂0xβ̂1) across 5000 straps",
+  labs(title = "Density plot of log(β̂0xβ̂1) \nacross 5000 straps",
        y = "Density (%)",
        x = "log(β̂0xβ̂1") +                           #add graph and axis title
   theme_bw() + 
@@ -233,11 +243,13 @@ weather_stats %>%
                        size=12, 
                        face='bold'), 
         legend.position = "none")  
+r_sqr + log_est
+
 ```
 
 We can get 95% CI for R-squared and log(β̂0xβ̂1)
 ```{r}
-weather_stats %>% pull(r.squared) %>% as.vector() %>% quantile(c(0.25, 0.975))
+weather_stats %>% pull(r.squared) %>% as.vector() %>% quantile(c(0.025, 0.975))
 
-weather_stats %>% pull(log_beta_prod) %>% as.vector() %>% quantile(c(0.25, 0.975))
+weather_stats %>% pull(log_beta_prod) %>% as.vector() %>% quantile(c(0.025, 0.975))
 ```
