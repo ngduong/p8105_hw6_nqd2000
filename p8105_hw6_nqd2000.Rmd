@@ -100,8 +100,8 @@ Since the p-value reported by the partial F-test is very small (<2.2e-16), we ca
 Check model assumption (normality of residuals) by plotting resid vs. fitted values
 ```{r}
 bw_data %>% 
-  add_residuals(reg_bic) %>%                   # adding residuals to our df
-  add_predictions(reg_bic) %>%                 # add predictions using our df
+  add_residuals(reg_bic) %>%             # add residuals using model, output as col in tibble
+  add_predictions(reg_bic) %>%           # add predictions using model
   ggplot(aes(x = pred, y = resid)) +
   geom_point(alpha = 0.3, color = "darkgreen") +
   geom_smooth(method = "lm", color = "purple") +
@@ -127,7 +127,27 @@ fit_int %>%
   broom::glance()
 ```
 
-Make this comparison in terms of the cross-validated prediction error; use crossv_mc and functions in purrr as appropriate.
+Make this comparison in terms of the cross-validated prediction error; use `crossv_mc` and functions in purrr as appropriate.
+
+```{r}
+cv_df = 
+  crossv_mc(bw_data, 100) 
+
+cv_df =
+  cv_df %>% 
+  mutate(
+    train = map(train, as_tibble),
+    test = map(test, as_tibble))
+
+cv_df = 
+  cv_df %>% 
+  mutate(fit_bic  = map(train, ~lm(bwt ~ babysex + bhead + blength + delwt + gaweeks + mheight + mrace + ppwt + smoken, data = .x)),
+         fit_main  = map(train, ~lm(bwt ~ blength + gaweeks, data = .x)),
+         fit_int  = map(train, ~lm(bwt ~ bhead*blength*babysex, data = .x))) %>% 
+  mutate(rmse_bic = map2_dbl(fit_bic, test, ~rmse(model = .x, data = .y)),
+         rmse_main = map2_dbl(fit_main, test, ~rmse(model = .x, data = .y)),
+         rmse_int = map2_dbl(fit_int, test, ~rmse(model = .x, data = .y)))
+```
 
 ### Problem 2
 
